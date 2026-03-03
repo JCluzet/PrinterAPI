@@ -10,6 +10,9 @@ echo "==> Pulling latest from GitHub..."
 git fetch origin
 git reset --hard origin/main
 
+echo "==> Installing system dependencies if needed..."
+dpkg -l libcairo2 2>/dev/null | grep -q '^ii' || sudo apt-get install -y libcairo2 libpango-1.0-0 libpangocairo-1.0-0 -q
+
 echo "==> Updating dependencies..."
 "$SCRIPT_DIR/.venv/bin/pip" install -r "$SCRIPT_DIR/requirements.txt" -q
 

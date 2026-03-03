@@ -8,6 +8,12 @@ from PIL import Image, ImageFile
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
+try:
+    import cairosvg
+    _SVG_SUPPORT = True
+except (ImportError, OSError):
+    _SVG_SUPPORT = False
+
 ESC = b'\x1b'
 GS  = b'\x1d'
 
@@ -122,6 +128,12 @@ def _image_to_escpos(img: Image.Image) -> bytes:
     return d
 
 
+def _svg_to_png(raw: bytes) -> bytes:
+    if not _SVG_SUPPORT:
+        raise RuntimeError('cairosvg not available')
+    return cairosvg.svg2png(bytestring=raw, output_width=PRINTER_WIDTH)
+
+
 def _render_image(el: dict) -> bytes:
     try:
         if 'data' in el:
@@ -134,6 +146,14 @@ def _render_image(el: dict) -> bytes:
             raw = urllib.request.urlopen(req, timeout=10).read()
         else:
             return b''
+        # Convert SVG to PNG first
+        is_svg = (
+            raw.lstrip()[:5] in (b'<?xml', b'<svg ') or
+            raw.lstrip()[:4] == b'<svg' or
+            el.get('url', '').lower().endswith('.svg')
+        )
+        if is_svg:
+            raw = _svg_to_png(raw)
         return _image_to_escpos(Image.open(BytesIO(raw)))
     except Exception as e:
         logging.getLogger(__name__).warning('image render error: %s', e)
