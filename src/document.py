@@ -1,5 +1,6 @@
 # src/document.py
 import base64
+import logging
 import urllib.request
 from io import BytesIO
 
@@ -23,6 +24,7 @@ SIZE_TALL    = GS  + b'!\x01'
 CUT          = GS  + b'V\x41\x05'
 
 PRINTER_WIDTH = 384
+MAX_HEIGHT    = 2000
 LINE_WIDTH    = 32
 
 
@@ -63,7 +65,10 @@ def _render_separator(el: dict) -> bytes:
 
 
 def _render_feed(el: dict) -> bytes:
-    lines = max(1, int(el.get('lines', 1)))
+    try:
+        lines = max(1, int(el.get('lines', 1)))
+    except (ValueError, TypeError):
+        lines = 1
     return b'\n' * lines
 
 
@@ -71,7 +76,10 @@ def _render_qr(el: dict) -> bytes:
     url = el.get('url', '').encode('utf-8')
     if not url:
         return b''
-    size = min(max(int(el.get('size', 6)), 1), 16)
+    try:
+        size = min(max(int(el.get('size', 6)), 1), 16)
+    except (ValueError, TypeError):
+        size = 6
     ln   = len(url) + 3
     d  = ALIGN_CENTER
     d += GS + b'(k\x04\x00\x31\x41\x32\x00'
@@ -88,6 +96,10 @@ def _image_to_escpos(img: Image.Image) -> bytes:
     if w > PRINTER_WIDTH:
         h = int(h * PRINTER_WIDTH / w)
         w = PRINTER_WIDTH
+        img = img.resize((w, h), Image.LANCZOS)
+    if h > MAX_HEIGHT:
+        w = int(w * MAX_HEIGHT / h)
+        h = MAX_HEIGHT
         img = img.resize((w, h), Image.LANCZOS)
     img = img.convert('1')
     byte_width = (w + 7) // 8
@@ -115,13 +127,17 @@ def _render_image(el: dict) -> bytes:
         if 'data' in el:
             raw = base64.b64decode(el['data'])
         elif 'url' in el:
-            req = urllib.request.Request(el['url'], headers={'User-Agent': 'PrinterAPI/1.0'})
+            url_str = el['url']
+            if not url_str.startswith(('http://', 'https://')):
+                return b'[image error: invalid URL scheme]\n'
+            req = urllib.request.Request(url_str, headers={'User-Agent': 'PrinterAPI/1.0'})
             raw = urllib.request.urlopen(req, timeout=10).read()
         else:
             return b''
         return _image_to_escpos(Image.open(BytesIO(raw)))
     except Exception as e:
-        return f'[image error: {e}]\n'.encode('utf-8', errors='replace')
+        logging.getLogger(__name__).warning('image render error: %s', e)
+        return b'[image error]\n'
 
 
 def _render_cut(_el: dict) -> bytes:
