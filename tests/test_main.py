@@ -27,6 +27,8 @@ def test_print_sends_bytes_to_printer():
 def test_print_rejects_invalid_base64():
     response = client.post('/print', json={'raw': 'not-valid-base64!!!'})
     assert response.status_code == 422
+    body = response.json()
+    assert any('base64' in str(err.get('msg', '')) for err in body.get('detail', []))
 
 
 def test_print_returns_error_on_printer_failure():
