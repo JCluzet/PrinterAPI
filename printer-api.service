@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 User=printer
 WorkingDirectory=/home/printer/PrinterAPI
-ExecStart=/home/printer/PrinterAPI/.venv/bin/uvicorn src.main:app --host 0.0.0.0 --port 8000
+ExecStart=/bin/bash /home/printer/PrinterAPI/start.sh
 Restart=on-failure
 RestartSec=5
 
