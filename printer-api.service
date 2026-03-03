@@ -1,0 +1,14 @@
+[Unit]
+Description=PrinterAPI - ESC/POS HTTP service
+After=network.target
+
+[Service]
+Type=simple
+User=printer
+WorkingDirectory=/home/printer/PrinterAPI
+ExecStart=/home/printer/PrinterAPI/.venv/bin/uvicorn src.main:app --host 0.0.0.0 --port 8000
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
