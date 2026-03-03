@@ -71,7 +71,7 @@ def test_image_base64_element():
         'z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg=='
     )
     result = document_to_escpos([{'type': 'image', 'data': png_1x1}])
-    assert b'\x1dv\x00' in result
+    assert b'\x1dv\x30' in result
 
 
 def test_image_invalid_base64_skips():
@@ -89,4 +89,4 @@ def test_image_url_element():
         mock_response.read.return_value = png_bytes
         mock_urlopen.return_value = mock_response
         result = document_to_escpos([{'type': 'image', 'url': 'https://example.com/img.png'}])
-    assert b'\x1dv\x00' in result
+    assert b'\x1dv\x30' in result

@@ -98,6 +98,17 @@ def _render_qr(el: dict) -> bytes:
 
 
 def _image_to_escpos(img: Image.Image) -> bytes:
+    # Flatten transparency onto white background
+    if img.mode in ('RGBA', 'LA', 'P'):
+        bg = Image.new('RGB', img.size, (255, 255, 255))
+        if img.mode == 'P':
+            img = img.convert('RGBA')
+        if img.mode in ('RGBA', 'LA'):
+            bg.paste(img, mask=img.split()[-1])
+        else:
+            bg.paste(img)
+        img = bg
+
     w, h = img.size
     if w > PRINTER_WIDTH:
         h = int(h * PRINTER_WIDTH / w)
@@ -120,7 +131,8 @@ def _image_to_escpos(img: Image.Image) -> bytes:
                     byte |= (1 << (7 - bit))
             raster.append(byte)
     d  = ALIGN_CENTER
-    d += GS + b'v\x00\x00'
+    # GS v 0: 1D 76 30 m xL xH yL yH  (0x30 = ASCII '0', not null byte)
+    d += GS + b'v\x30\x00'
     d += bytes([byte_width & 0xFF, (byte_width >> 8) & 0xFF])
     d += bytes([h & 0xFF, (h >> 8) & 0xFF])
     d += bytes(raster)
