@@ -13,8 +13,8 @@ https://printer.cluzhub.com
 Tous les endpoints requièrent deux headers Cloudflare Access :
 
 ```
-CF-Access-Client-Id: <client-id>
-CF-Access-Client-Secret: <client-secret>
+CF-Access-Client-Id: 3f410ca892b75421c8db9239126c564d.access
+CF-Access-Client-Secret: b8a5cdb1b07dbf043281c3199b7588240eaadfe8f99a4c1511ee2b8e7cd65efb
 ```
 
 ---
