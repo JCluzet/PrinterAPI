@@ -31,7 +31,7 @@ CUT          = GS  + b'V\x41\x05'
 
 PRINTER_WIDTH = 384
 MAX_HEIGHT    = 2000
-LINE_WIDTH    = 48
+LINE_WIDTH    = 47
 
 
 def _align(align: str) -> bytes:
